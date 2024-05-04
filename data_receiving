@@ -1,0 +1,253 @@
+import processing.serial.*;
+// инициализация и присваивание переменных значений 
+PrintWriter output;
+Table table,tableE;
+ 
+int na1 = 4000; 
+ 
+float[] t1 = new float[na1+10];
+ 
+float[] fd = new float[na1+10];
+float[] fd2 = new float[na1+10];
+float[] fd3 = new float[na1+10];
+ 
+int size_Dat=2900;
+float[][] we = new float[10][5];
+float[][] we2 = new float[10][5];
+float[][] we3 = new float[10][5];
+ 
+float[][] wa = new float[10][5];
+float[][] wa2 = new float[10][5];
+float[][] wa3 = new float[10][5];
+ 
+int[] dat = new int[size_Dat];
+byte[] quat1 = new byte[4];
+int n2=100;
+float[] xcr = new float[n2+10];
+float[] tc = new float[n2+10];
+int len=1;
+int  nub_p;
+boolean parce;
+Serial myPort,myPort1,myPort2,myPort3;  // The serial port
+int t,kp,ka;
+int sz=30;
+int sz1;
+float ya,def;
+ 
+int n=3000000;
+float [][] xx = new float[n][10];
+float [][] xd = new float[n][10];
+float xc,yc,zc,dx,dy,dz,r1,r2,r3,xb1,xb2,xb3,yb1,yb2,yb3,rb,s;
+int k, k1,k2,ee;
+float Scd=200;
+float Sc=0.8;
+float vx,vy,zy,xt,yt,zt,axt,ayt,azt;
+float d,e,kk,Am,Bm,Cm,ax,m,mt;
+float nn1=1;
+float nn=0;
+ 
+void setup() {
+  kk = sq(2*PI*2);
+  d = 20.0/1000;
+  e = -2*PI*2*0.1;
+  m=1;
+  Bm = m/sq(d)+e/(2*d)+kk/3;
+  Am = -2*m/sq(d)+      kk/3;
+  Cm = m/sq(d)-e/(2*d)+kk/3;
+ 
+  // List all the available serial ports
+  printArray(Serial.list());
+ 
+  myPort  = new Serial(this, "COM6", 921600);
+ 
+  size(1000,800, P3D);
+ 
+  textSize(100);
+  table = loadTable("wind1.csv", "header");
+  tableE = loadTable("wind1e.csv", "header");
+ 
+  k1=0;
+  k=0;
+  xc=0;
+  yc=0;
+  zc=0;
+ 
+  for (TableRow row : table.rows()) {
+	ee = row.getInt(0);
+ 	k1=k1+1;
+     if (k1>-20){
+      xx[k1][0] = row.getFloat(1);
+      xx[k1][1] = row.getFloat(2);
+      xx[k1][2] = row.getFloat(3);
+      xx[k1][3] = row.getFloat(4);
+	  xx[k1][4] = row.getFloat(5);
+      xx[k1][5] = row.getFloat(6);
+      xx[k1][6] = row.getFloat(7);
+      xx[k1][7] = row.getFloat(8);
+      xx[k1][8] = row.getFloat(9);
+ 	  xc+=xx[k1][0];
+      yc+=xx[k1][1];
+      zc+=xx[k1][2];
+     }
+  }
+ 
+  k2=0;
+ 
+  for (TableRow rowE : tableE.rows()) {
+    xd[k2][0] = rowE.getFloat(1);
+    xd[k2][1] = rowE.getFloat(2);
+    xd[k2][2] = rowE.getFloat(3);
+    xd[k2][3] = rowE.getFloat(4);
+    xd[k2][4] = rowE.getFloat(5);
+    xd[k2][5] = rowE.getFloat(6);
+    k2++;
+ }
+ 
+ mt=millis();
+}
+ 
+void draw() {  
+  background(200);  
+  fill(0);
+  stroke(0);
+  text("H  "+ya,200,100);
+ 
+// запись в таблицу 4000 значений углов
+    if (ka>na1-10){ 
+      output = createWriter("/sdcard/pg"+(int)(1000+kp)+".txt"); 
+      output = createWriter("sdcard/pg.txt"); 
+    for (int i=0;i<ka-10;i++){
+     output.println(i+", "+fd[i]+", "+fd2[i]+", " + fd3[i] + ";");
+    }
+output.flush();
+output.close();
+// конец записи 
+// обнуление счетчиков
+ka=0;
+kp++;
+ 
+}
+ 
+println(ka);
+println(we[0][0], we2[0][0], we3[0][0]);
+ 
+// Expand array size to the number of bytes you expect
+// передача данных по заданному протоколу
+byte[] inBuffer = new byte[7];
+  while (myPort.available() > 0) {
+    inBuffer = myPort.readBytes();
+    myPort.readBytes(inBuffer);
+    dat=int(inBuffer);
+    bl_new1();   
+    ka++;
+    fd[ka] = we[0][0];
+    fd2[ka] = we2[0][0];
+    fd3[ka] = we3[0][0];
+ 
+    xcr[0]=fd[ka];
+ 
+ 
+   for (int i=1;i<n2-len*0;i++){ 
+     xcr[n2-i]=xcr[n2-i-1];
+     tc[n2-i]=tc[n2-i-1];
+   }
+  }
+ 
+strokeWeight(1);
+  for (int i=1;i<n2;i++){ 
+    stroke(0);
+    line(i*width/n2,xcr[i]+height/4,(i-1)*width/n2,xcr[i-1]+height/4);
+    stroke(200,0,0);
+    line(i*width/n2,tc[i]+height/4,(i-1)*width/n2,tc[i-1]+height/4);
+  }
+ 
+translate(-xc/k1+width*0.15, -yc/k1+height*0.5,-zc/k1+width*0.25);
+rotateY(PI*we3[0][0]/180.0);
+strokeWeight(10);
+ 
+ax=(xcr[0]-2*xcr[1]+xcr[2])*0.1/sq(d);
+tc[0]= we2[0][0];
+  for (int i = 0; i < k1; i++) {
+	dx=xx[i][3]*Scd*tc[0]/200+xx[i][6]*Scd*(mouseY-width*0.25)/width;
+    dy=xx[i][4]*Scd*tc[0]/200+xx[i][7]*Scd*(mouseY-width*0.25)/width;
+    dz=xx[i][5]*Scd*tc[0]/200+xx[i][8]*Scd*(mouseY-width*0.25)/width;
+    stroke(100+dx*8,100+dy*8,100+dz*8,50);
+    point(xx[i][0]*Sc+dx, xx[i][1]*Sc+dy, xx[i][2]*Sc*0.3+dz);
+ 
+  } 
+}
+// функция переводящая битовые данные в числовые с плавающей точкой
+public float byteArrayToFloat(byte test[]) {
+    int MASK = 0xff; 
+    int bits = 0; 
+    int i = 3; 
+    for (int shifter = 3; shifter >= 0; shifter--) { 
+    bits |= ((int) test[i] & MASK) << (shifter * 8); 
+    i--; 
+    } 
+    return Float.intBitsToFloat(bits); 
+}
+ 
+void bl_new1() {
+  //  0   -1 -2 -3  -4 -5  -6  -7  
+  // 116 101 xx xx 109 69 109 48 
+ 
+int i1=0;
+int l1=0;    
+boolean stateb=true;
+  while ((stateb)&&(l1<dat.length-7)) {
+    if ((dat[0+l1]==85)&&(dat[1+l1]==83)) {
+      i1=l1;
+      stateb=false;
+    }
+    l1++;
+  }
+ 
+ we2[0][0]=float((dat[i1+3]<<8)|dat[i1+2])*180.0/32768;
+ we3[0][0]=float((dat[i1+5]<<8)|dat[i1+4])*180.0/32768 ;
+ we[0][0]=float((dat[i1+7]<<8)|dat[i1+6])*180.0/32768 ;
+ stateb=true;
+   while ((stateb)&&(l1<dat.length-7)) {
+    if ((dat[0+l1]==85)&&(dat[1+l1]==81)) {
+      i1=l1;
+      stateb=false;
+    }
+    l1++;
+  }
+ 
+wa[0][0] = float((dat[i1+3]<<8)|dat[i1+2])*(1)/(32768*1.999490) ;
+wa2[0][0]=float((dat[i1+5]<<8)|dat[i1+4])*(1)/(32768*1.999490) ;
+wa3[0][0]=float((dat[i1+7]<<8)|dat[i1+6])*(1)/(32768*1.999490) ;
+ 
+axt=axt*0.8+0.1*wa[0][0];
+ayt=ayt*0.8+0.1*wa2[0][0];
+azt=azt*0.8+0.1*wa3[0][0];
+nn=nn*0.999+0.001*(wa[0][0]-nn1*cos(we2[0][0]*PI/180))*d;
+vx=vx*0.80+0.1*(axt-nn1*cos(we2[0][0]*PI/180))*d;
+xt=xt*0.88+0.1*vx*d;
+ 
+d=(millis()-mt)/2000;
+ 
+mt=millis();
+ 
+int sz=77; 
+l1++;
+nub_p=0;
+ for (int l=0; l<(dat.length-i1)/sz; l++) {
+ stateb=true;
+ while ((stateb)&&(l1<dat.length-7)) {
+    if ((dat[0+l1]==85)&&(dat[1+l1]==83)) {
+      i1=l1;
+      stateb=false;
+    }
+    l1++;
+  }
+if (((i1+4+1)<dat.length)&&(l<4)) {
+we2[0][l+1]=float((dat[i1+3]<<8)|dat[i1+2])*180.0/32768;
+we3[0][l+1]=float((dat[i1+5]<<8)|dat[i1+4])*180.0/32768 ;
+we[0][l+1]=float((dat[i1+7]<<8)|dat[i1+6])*180.0/32768 ;
+nub_p=l+1;
+}
+}
+ 
+}
